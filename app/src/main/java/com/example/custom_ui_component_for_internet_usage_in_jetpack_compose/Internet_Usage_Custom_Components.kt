@@ -1,17 +1,21 @@
 package com.example.custom_ui_component_for_internet_usage_in_jetpack_compose
 
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -21,9 +25,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun CustomComponent(
@@ -31,30 +40,50 @@ fun CustomComponent(
     indicatorValue: Int = 0,
     maxIndicatorValue: Int = 100,
     backGroundIndicatorColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-    backGroundIndicatorWidth: Float = 100f,
+    backGroundIndicatorWidth: Float = 80f,
     forGroundIndicatorColor: Color = MaterialTheme.colorScheme.primary,
-    forGroundIndicatorWidth: Float = 100f
+    forGroundIndicatorWidth: Float = 50f,
+//    bigTextFontSize: TextStyle = MaterialTheme.typography.headlineLarge,
+    bigTextColor: Color = MaterialTheme.colorScheme.onSurface,
+    bigTextSuffix: String = "GB",
+    smallText: String = "Remaining",
+//    smallTextFontSize: TextStyle = MaterialTheme.typography.titleSmall,
+    smallTextColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+
 ) {
     var allowedIndicatorValue by remember {
         mutableStateOf(maxIndicatorValue)
     }
-    allowedIndicatorValue = if (indicatorValue <= maxIndicatorValue){
+    allowedIndicatorValue = if (indicatorValue <= maxIndicatorValue) {
         indicatorValue
-    }else{
+    } else {
         maxIndicatorValue
     }
-    val animatedIndicatorValue = remember {
-        Animatable(
-            initialValue = 0f
-        )
+    var animatedIndicatorValue by remember {
+        mutableStateOf(0f)
     }
-    LaunchedEffect(key1 = allowedIndicatorValue, block ={
-        animatedIndicatorValue.animateTo(allowedIndicatorValue.toFloat())
+    LaunchedEffect(key1 = allowedIndicatorValue, block = {
+        animatedIndicatorValue = allowedIndicatorValue.toFloat()
     })
 
-    val percentage = (animatedIndicatorValue.value / maxIndicatorValue) * 100
-    val sweepAngle by animateFloatAsState(targetValue = (2.4f * percentage.toFloat()),
-        animationSpec = tween(1000)
+    val percentage = (animatedIndicatorValue / maxIndicatorValue) * 100
+    val sweepAngle by animateFloatAsState(
+        targetValue = (2.4f * percentage.toFloat()),
+        animationSpec = tween(1000), label = ""
+    )
+
+    val receivedValue by animateIntAsState(
+        targetValue = allowedIndicatorValue,
+        animationSpec = tween(1000), label = ""
+    )
+
+    val animatedBigTextColor by animateColorAsState(
+        targetValue = if (allowedIndicatorValue == 0) {
+ MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+        }
+        else{
+            bigTextColor
+        }, animationSpec = tween(1000), label = ""
     )
 
 
@@ -75,9 +104,19 @@ fun CustomComponent(
                     indicatorColor = forGroundIndicatorColor,
                     indicatorStrokeWidth = forGroundIndicatorWidth,
                 )
-            }
+            },
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
+        EmbeddedElements(
+            bigText = receivedValue,
+//    bigTextFontSize = bigTextFontSize,
+            bigTextColor = animatedBigTextColor,
+            bigTextSuffix = bigTextSuffix,
+            smallText = smallText,
+            smallTextColor = smallTextColor,
+//    smallTextFontSize = smallTextFontSize
+        )
     }
 
 }
@@ -104,6 +143,7 @@ fun DrawScope.backGroundIndicator(
     )
 
 }
+
 //forGround Indicator
 fun DrawScope.forGroundIndicator(
     sweepAngle: Float,
@@ -145,6 +185,33 @@ fun DrawScope.forGroundIndicator(
     )
 
 }
+
+@Composable
+fun EmbeddedElements(
+    bigText: Int,
+//    bigTextFontSize: TextUnit,
+    bigTextColor: Color,
+    bigTextSuffix: String,
+    smallText: String,
+    smallTextColor: Color,
+//    smallTextFontSize: TextUnit
+) {
+    Text(
+        text = smallText,
+        color = smallTextColor,
+        fontSize = 18.sp,
+        textAlign = TextAlign.Center
+    )
+
+    Text(
+        text = "$bigText ${bigTextSuffix.take(2)}",
+        color = bigTextColor,
+        fontSize = 24.sp,
+        textAlign = TextAlign.Center,
+        fontWeight = FontWeight.Bold
+    )
+}
+
 
 @Preview(showBackground = true)
 @Composable
